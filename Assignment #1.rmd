@@ -1,12 +1,10 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Rep Research Assignment 1"
+author: "Tyler Harris"
+date: "Wednesday, August 05, 2015"
+output: html_document
 ---
 
-
-## Loading and preprocessing the data
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -17,13 +15,10 @@ filter(activity, steps != "NA") -> activity.f
 group_by(activity.f, date) -> activity.fg
 summarise(activity.fg, total = sum(steps)) -> act_sum
 ```
-## What is mean total number of steps taken per day?
-```{r}
-summarise(activity.fg, total = sum(steps)) -> act_sum
 
-summarise(act_sum, Mean = mean(total), Median = median(total))
-```{r}
-##Histogram
+
+```{r, echo = F}
+##Create the histogram
 p <- ggplot(data = act_sum, mapping = aes(x = as.Date(date), y = total))
 
 p + layer(geom = "histogram", stat = "identity") -> p
@@ -32,8 +27,12 @@ p + labs(title = "Total Number of Steps Taken Each Day", x = "Date", y = "Total 
 p
 ```
 
-## What is the average daily activity pattern?
 
+```{r}
+##Find Mean and Median
+
+summarise(act_sum, Mean = mean(total), Median = median(total))
+```
 ```{r}
 group_by(activity, interval) -> g_act
 
@@ -41,7 +40,11 @@ select(g_act, steps) -> g_act_s
 
 summarise(g_act_s, Mean = mean(steps, na.rm = T)) -> m_act
 
-##time series plot
+
+
+
+## The plot:
+
 j <- ggplot(data = m_act, mapping = aes(x = interval, y = Mean))
 
 j <- j + layer(geom = "line")
@@ -49,15 +52,14 @@ j <- j + layer(geom = "line")
 j <- j + labs(title = "Average Steps at Each Interval", x = "Interval", y = "Average Steps")
 j
 
+## Find the row of the highest mean
+
 max(m_act$Mean) -> mmax
 
 which(grepl(mmax, m_act$Mean)) -> m
 
-m_act[m,]
-
-##The highest average number of steps, 206, occurs at 835 minutes.
+m_act[m,] ##Answer: Max is at interval 835.
 ```
-## Imputing missing values
 ```{r}
 ## Find the number of NA's:
 
@@ -66,7 +68,7 @@ activity[is.na(activity$steps),] -> NAs
 length(NAs$steps)
 
 ## Function for creating NA value.
-##
+## instead of m_act:
 
 group_by(activity, date) -> gd_act
 
@@ -93,23 +95,3 @@ k
 ##Mean and Median:
 
 summarise(act2_sum, Mean = mean(total), Median = median(total))
-```
-
-## Are there differences in activity patterns between weekdays and weekends?
-```{r}
-activity.f$days <- weekdays(as.Date(activity.f$date))
-
-sorter <- function(x){
-  if (x == "Sunday"|x == "Saturday"){
-    return("Weekend")
-  }
-  else{
-    return("Weekday")
-  }
-}
-  activity.f$daytype <- as.character(lapply(activity.f$days, sorter)[1:15264])
-  q <- ggplot(activity.f,     aes(x = interval, y = steps)) + geom_line() + facet_grid(daytype ~ .) + labs(x = "Interval", y = "Number of Steps")
-q
-# Yes, there are differences in activity patterns.  Activity occurs later in the day on #weekends.
-
-```
